@@ -10,38 +10,54 @@ import (
 	"github.com/asticode/go-astisub"
 )
 
-func main() {
-	var f1, f2, fO string = parseArgs()
-
-	s1 := readFromFile(f1)
-	s2 := readFromFile(f2)
-
-	sO := mix(s1, s2)
-
-	writeToFile(fO, sO)
+type args struct {
+	// input file for main lang subtitles
+	f1 string
+	// input file for secondary lang subtitles
+	f2 string
+	// output file where mixed subs must be written
+	output string
+	// tolerance in ms for a valid subtitle
+	tolerance time.Duration
+	// max search offset to be applied when searching subs
+	searchOffset int
 }
 
-func parseArgs() (string, string, string) {
+func main() {
+	args := parseArgs()
+
+	s1 := readFromFile(args.f1)
+	s2 := readFromFile(args.f2)
+
+	sO := mix(s1, s2, args.tolerance, args.searchOffset)
+
+	writeToFile(args.output, sO)
+}
+
+func parseArgs() args {
 	var help = "parameter is mandatory. Run help(-h) command for more info"
-	var s1, s2, sO string
-	flag.StringVar(&s1, "s1", "", "main subtitle file. mandatory")
-	flag.StringVar(&s2, "s2", "", "secondary subtitle file. mandatory")
-	flag.StringVar(&sO, "sO", "", "output subtitle file. mandatory")
+	var f1, f2, fO string
+	var t, sO int
+	flag.StringVar(&f1, "s1", "", "main subtitle file. mandatory")
+	flag.StringVar(&f2, "s2", "", "secondary subtitle file. mandatory")
+	flag.StringVar(&fO, "sO", "", "output subtitle file. mandatory")
+	flag.IntVar(&t, "t", 500, "max tolerance for subtitle start time")
+	flag.IntVar(&sO, "so", 10, "search max offset, number of adjacent subtitles to be analyzed")
 	flag.Parse()
-	if len(s1) == 0 {
+	if len(f1) == 0 {
 		fmt.Println("s1", help)
 		os.Exit(1)
 	}
-	if len(s2) == 0 {
+	if len(f2) == 0 {
 		fmt.Println("s2", help)
 		os.Exit(1)
 	}
-	if len(sO) == 0 {
+	if len(fO) == 0 {
 		fmt.Println("sO", help)
 		os.Exit(1)
 	}
-	fmt.Println("Input", s1, "-", s2, "Output", sO)
-	return s1, s2, sO
+	tolerance := time.Duration(time.Duration(t) * time.Millisecond)
+	return args{f1: f1, f2: f2, output: fO, tolerance: tolerance, searchOffset: sO}
 }
 
 func readFromFile(fn string) *astisub.Subtitles {
@@ -53,44 +69,12 @@ func readFromFile(fn string) *astisub.Subtitles {
 	return s1
 }
 
-func mix(s1 *astisub.Subtitles, s2 *astisub.Subtitles) *astisub.Subtitles {
-	// crear un astisub.Subtitles para poder añadir entradas
-	//TODO: los lengths no cuadran...
-	// hay que resolver por tiempo, y los ms no cuadran... definir un tiempo max y hacer
-	// busqueda a ver cuantos hacen match. resolver con el más cercano? el que tenga resta menor?
-	//fmt.Println(s1.Items[0].Index, s1.Items[0].StartAt, s1.Items[0].EndAt, s1.Items[0].Lines)
-	// s1.Items[1085].Lines = append(s1.Items[1085].Lines, s2.Items[1085].Lines...)
-	// for i, item := range s1.Items[1085].Lines {
-	// 	fmt.Println(i, item)
-	// }
-	// fmt.Println(s1.Items[1085].Lines)
-
-	//TODO: all this stuff must be injected
-	//TODO: all this stuff must be injected
-	// diff params
-	maxDiffD := time.Duration(500 * time.Millisecond) //max diff aceptable
-	//search params
-	maxOffsetI := 10 // num of subs to search forwards and backwards
+func mix(s1 *astisub.Subtitles, s2 *astisub.Subtitles, tolerance time.Duration, searchOffset int) *astisub.Subtitles {
 	length := Max(len(s1.Items), len(s2.Items))
-	li := LastIndex(s1.Items, s2.Items)
-	avgLS := li.EndAt.Seconds() / float64(length)
-	fmt.Println("avg line seconds", avgLS)
-	maxOffsetS := avgLS * float64(maxOffsetI)
-	fmt.Println("max offset seconds", maxOffsetS)
-	maxOffsetSInt64 := int64(maxOffsetS) * int64(time.Second)
-	maxOffsetD := time.Duration(maxOffsetSInt64) // max offset seconds to search a matching subtitle
-	fmt.Println("maxOffsetD", maxOffsetD)
-	fmt.Println("maxOffsetI", maxOffsetI)
-	fmt.Println("maxDiffD", maxDiffD)
-	//TODO: all this stuff must be injected
-	//TODO: all this stuff must be injected
-
 	errors := 0
 	for _, item := range s1.Items {
-		i2Item, err := search(item, s2.Items, maxOffsetD, maxOffsetI, maxDiffD)
-		fmt.Println("after")
+		i2Item, err := search(item, s2.Items, searchOffset, tolerance)
 		if err != nil {
-			fmt.Println(err)
 			errors += 1
 			notFoundItem := astisub.LineItem{Text: "%- not found -%"} //TODO: review /inject this message
 			notFoundItems := []astisub.LineItem{notFoundItem}
@@ -107,30 +91,21 @@ func mix(s1 *astisub.Subtitles, s2 *astisub.Subtitles) *astisub.Subtitles {
 	return s1
 }
 
-//TODO: not used maxOffsetD
-func search(i1 *astisub.Item, i2 []*astisub.Item, maxOffsetD time.Duration, maxOffsetI int, maxDiffD time.Duration) (*astisub.Item, error) {
+func search(i1 *astisub.Item, i2 []*astisub.Item, searchOffset int, tolerance time.Duration) (*astisub.Item, error) {
 	index := i1.Index
-	minTime := i1.StartAt - maxOffsetD
-	maxTime := i1.StartAt + maxOffsetD
-	fmt.Println("index", index)
-	fmt.Println("time", i1.StartAt)
-	fmt.Println("minTime", minTime)
-	fmt.Println("maxTime", maxTime)
 	length := len(i2)
 	var target *astisub.Item
-	for i := 1; i <= maxOffsetI; i++ {
+	for i := 0; i < searchOffset; i++ {
 		nextIndex := index - 1 + i
 		if nextIndex < length {
-			fmt.Println("accesing ni", nextIndex)
-			if startAtIsInRange(i1, i2[nextIndex], maxDiffD) {
+			if startAtIsInRange(i1, i2[nextIndex], tolerance) {
 				target = i2[nextIndex]
 				break
 			}
 		}
 		previousIndex := index - 1 - i
 		if previousIndex >= 0 && previousIndex < length {
-			fmt.Println("accesing pi", previousIndex)
-			if startAtIsInRange(i1, i2[previousIndex], maxDiffD) {
+			if startAtIsInRange(i1, i2[previousIndex], tolerance) {
 				target = i2[previousIndex]
 				break
 			}
@@ -143,9 +118,9 @@ func search(i1 *astisub.Item, i2 []*astisub.Item, maxOffsetD time.Duration, maxO
 	}
 }
 
-func startAtIsInRange(i *astisub.Item, t *astisub.Item, diff time.Duration) bool {
+func startAtIsInRange(i *astisub.Item, t *astisub.Item, tolerance time.Duration) bool {
 	startAtDiff := math.Abs(i.StartAt.Seconds() - t.StartAt.Seconds())
-	if startAtDiff < diff.Seconds() {
+	if startAtDiff < tolerance.Seconds() {
 		return true
 	} else {
 		return false
