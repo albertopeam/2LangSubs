@@ -12,9 +12,9 @@
 
 ## Usage
 
-* help: go run main.go -h
+* help: go run main.go math.go slice.go -h
 * usage: go run main.go -s1 file1 -s2 file2
-  * ie: go run main.go math.go slice.go -s1 testAssets/Thr-Spanish.srt -s2 testAssets/Thr.2011.720p.BrRip.264.English.srt -sO testAssets/output.srt -t 500 -so 10 -em "-not found subtitle-"
+  * ie: go run main.go math.go slice.go -s1 testAssets/Thr-Spanish.srt -s2 testAssets/Thr.2011.720p.BrRip.264.English.srt -sO testAssets/output.srt -t 500 -so 10 -em "-not found subtitle-" -mpe 5
 
 ## Tasks
 

@@ -23,6 +23,8 @@ type args struct {
 	searchOffset int
 	// error message to be displayed when a subtitle hasn't been found
 	errMsg string
+	// max percentage of errors allowed to consider a successfull mix of subtitles. inclusive
+	maxPercentageErrAllowed int
 }
 
 func main() {
@@ -33,20 +35,26 @@ func main() {
 
 	numErr, percErr := mix(s1, s2, args.tolerance, args.searchOffset, args.errMsg)
 
-	writeToFile(args.output, s1)
-
-	fmt.Printf("total Errors %v, percentage of errors %v", numErr, percErr)
+	if percErr <= float64(args.maxPercentageErrAllowed) {
+		writeToFile(args.output, s1)
+		fmt.Println("succesfully write subtitles to", args.output)
+		fmt.Printf("total Errors %v, percentage of errors %v", numErr, percErr)
+	} else {
+		fmt.Printf("percentage of errors %v exceeds the limit percentage %v\n", numErr, args.maxPercentageErrAllowed)
+		os.Exit(1)
+	}
 }
 
 func parseArgs() args {
 	var help = "parameter is mandatory. Run help(-h) command for more info"
 	var f1, f2, fO, errMsg string
-	var t, sO int
+	var t, sO, mpea int
 	flag.StringVar(&f1, "s1", "", "main subtitle file. mandatory")
 	flag.StringVar(&f2, "s2", "", "secondary subtitle file. mandatory")
 	flag.StringVar(&fO, "sO", "", "output subtitle file. mandatory")
 	flag.IntVar(&t, "t", 500, "max tolerance for subtitle start time")
-	flag.IntVar(&sO, "so", 10, "search max offset, number of adjacent subtitles to be analyzed")
+	flag.IntVar(&sO, "so", 10, "search max offset, number of adjacent subtitles to be analyzed, forwards and backwards")
+	flag.IntVar(&mpea, "mpe", 5, "max percentage of errors allowed to consider a successfull mix of subtitles")
 	flag.StringVar(&errMsg, "em", "%- not found subtitle -%", "error message to be displayed when a subtitle hasn't been found")
 	flag.Parse()
 	if len(f1) == 0 {
@@ -62,7 +70,7 @@ func parseArgs() args {
 		os.Exit(1)
 	}
 	tolerance := time.Duration(time.Duration(t) * time.Millisecond)
-	return args{f1: f1, f2: f2, output: fO, tolerance: tolerance, searchOffset: sO, errMsg: errMsg}
+	return args{f1: f1, f2: f2, output: fO, tolerance: tolerance, searchOffset: sO, errMsg: errMsg, maxPercentageErrAllowed: mpea}
 }
 
 func readFromFile(fn string) *astisub.Subtitles {
