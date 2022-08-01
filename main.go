@@ -21,6 +21,8 @@ type args struct {
 	tolerance time.Duration
 	// max search offset to be applied when searching subs
 	searchOffset int
+	// error message to be displayed when a subtitle hasn't been found
+	errMsg string
 }
 
 func main() {
@@ -29,20 +31,23 @@ func main() {
 	s1 := readFromFile(args.f1)
 	s2 := readFromFile(args.f2)
 
-	sO := mix(s1, s2, args.tolerance, args.searchOffset)
+	numErr, percErr := mix(s1, s2, args.tolerance, args.searchOffset, args.errMsg)
 
-	writeToFile(args.output, sO)
+	writeToFile(args.output, s1)
+
+	fmt.Printf("total Errors %v, percentage of errors %v", numErr, percErr)
 }
 
 func parseArgs() args {
 	var help = "parameter is mandatory. Run help(-h) command for more info"
-	var f1, f2, fO string
+	var f1, f2, fO, errMsg string
 	var t, sO int
 	flag.StringVar(&f1, "s1", "", "main subtitle file. mandatory")
 	flag.StringVar(&f2, "s2", "", "secondary subtitle file. mandatory")
 	flag.StringVar(&fO, "sO", "", "output subtitle file. mandatory")
 	flag.IntVar(&t, "t", 500, "max tolerance for subtitle start time")
 	flag.IntVar(&sO, "so", 10, "search max offset, number of adjacent subtitles to be analyzed")
+	flag.StringVar(&errMsg, "em", "%- not found subtitle -%", "error message to be displayed when a subtitle hasn't been found")
 	flag.Parse()
 	if len(f1) == 0 {
 		fmt.Println("s1", help)
@@ -57,7 +62,7 @@ func parseArgs() args {
 		os.Exit(1)
 	}
 	tolerance := time.Duration(time.Duration(t) * time.Millisecond)
-	return args{f1: f1, f2: f2, output: fO, tolerance: tolerance, searchOffset: sO}
+	return args{f1: f1, f2: f2, output: fO, tolerance: tolerance, searchOffset: sO, errMsg: errMsg}
 }
 
 func readFromFile(fn string) *astisub.Subtitles {
@@ -69,14 +74,20 @@ func readFromFile(fn string) *astisub.Subtitles {
 	return s1
 }
 
-func mix(s1 *astisub.Subtitles, s2 *astisub.Subtitles, tolerance time.Duration, searchOffset int) *astisub.Subtitles {
+// mutates s1 mixing the contents of s2
+// input: s1 and s2 represnting subtitles for two languages,
+// tolerance that the subs can have in StartAt,
+// searchOffset the number of subtitles to search for both forward and backward
+// errMsg the error to be displayed if subtitle can't be found
+// output: the number of errors over the total length and the percent that it represents
+func mix(s1 *astisub.Subtitles, s2 *astisub.Subtitles, tolerance time.Duration, searchOffset int, errMsg string) (int, float64) {
 	length := Max(len(s1.Items), len(s2.Items))
-	errors := 0
+	numErr := 0
 	for _, item := range s1.Items {
 		i2Item, err := search(item, s2.Items, searchOffset, tolerance)
 		if err != nil {
-			errors += 1
-			notFoundItem := astisub.LineItem{Text: "%- not found -%"} //TODO: review /inject this message
+			numErr += 1
+			notFoundItem := astisub.LineItem{Text: errMsg}
 			notFoundItems := []astisub.LineItem{notFoundItem}
 			notFoundLine := astisub.Line{Items: notFoundItems}
 			item.Lines = append(item.Lines, notFoundLine)
@@ -84,11 +95,8 @@ func mix(s1 *astisub.Subtitles, s2 *astisub.Subtitles, tolerance time.Duration, 
 			item.Lines = append(item.Lines, i2Item.Lines...)
 		}
 	}
-
-	fmt.Println("total Errors", errors)
-	fmt.Println("total errors %", float64(errors)/float64(length)*100)
-
-	return s1
+	percErr := float64(numErr) / float64(length) * 100
+	return numErr, percErr
 }
 
 func search(i1 *astisub.Item, i2 []*astisub.Item, searchOffset int, tolerance time.Duration) (*astisub.Item, error) {
