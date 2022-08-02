@@ -12,9 +12,13 @@
 
 ## Usage
 
-* help: go run main.go math.go slice.go -h
-* usage: go run main.go -s1 file1 -s2 file2
-  * ie: go run main.go math.go slice.go -s1 testAssets/Thr-Spanish.srt -s2 testAssets/Thr.2011.720p.BrRip.264.English.srt -sO testAssets/output.srt -t 500 -so 10 -em "-not found subtitle-" -mpe 5 -d "*-*"
+* help: `go run main.go math.go -h`
+* usage: `go run main.go -s1 file1 -s2 file2`
+  * ie: `go run main.go math.go -s1 testdata/Thr-Spanish.srt -s2 testdata/Thr.2011.720p.BrRip.264.English.srt -sO testdata/output.srt -t 500 -so 10 -em "-not found subtitle-" -mpe 5 -d "*-*"`
+* run tests: `go test -cover`
+* run tests with coverage profile:
+  * generate coverage profile(list all functions by file): `go test -covermode=count -coverprofile coverage 2langsubs`
+  * run tool to get coverage by file `go tool cover -func=coverage`
 
 ## Tasks
 
