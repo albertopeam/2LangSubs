@@ -40,7 +40,7 @@ func main() {
 	if percErr <= float64(args.maxPercentageErrAllowed) {
 		writeToFile(args.output, s1)
 		fmt.Println("succesfully write subtitles to", args.output)
-		fmt.Printf("total Errors %v, percentage of errors %v", numErr, percErr)
+		fmt.Printf("total Errors %v, percentage of errors %v\n", numErr, percErr)
 	} else {
 		fmt.Printf("percentage of errors %v exceeds the limit percentage %v\n", numErr, args.maxPercentageErrAllowed)
 		os.Exit(1)
