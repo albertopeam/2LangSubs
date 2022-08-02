@@ -25,6 +25,8 @@ type args struct {
 	errMsg string
 	// max percentage of errors allowed to consider a successfull mix of subtitles. inclusive
 	maxPercentageErrAllowed int
+	// shows a custom divider between the subtitles
+	divider string
 }
 
 func main() {
@@ -33,7 +35,7 @@ func main() {
 	s1 := readFromFile(args.f1)
 	s2 := readFromFile(args.f2)
 
-	numErr, percErr := mix(s1, s2, args.tolerance, args.searchOffset, args.errMsg)
+	numErr, percErr := mix(s1, s2, args.tolerance, args.searchOffset, args.errMsg, args.divider)
 
 	if percErr <= float64(args.maxPercentageErrAllowed) {
 		writeToFile(args.output, s1)
@@ -47,7 +49,7 @@ func main() {
 
 func parseArgs() args {
 	var help = "parameter is mandatory. Run help(-h) command for more info"
-	var f1, f2, fO, errMsg string
+	var f1, f2, fO, errMsg, divider string
 	var t, sO, mpea int
 	flag.StringVar(&f1, "s1", "", "main subtitle file. mandatory")
 	flag.StringVar(&f2, "s2", "", "secondary subtitle file. mandatory")
@@ -56,6 +58,7 @@ func parseArgs() args {
 	flag.IntVar(&sO, "so", 10, "search max offset, number of adjacent subtitles to be analyzed, forwards and backwards")
 	flag.IntVar(&mpea, "mpe", 5, "max percentage of errors allowed to consider a successfull mix of subtitles")
 	flag.StringVar(&errMsg, "em", "%- not found subtitle -%", "error message to be displayed when a subtitle hasn't been found")
+	flag.StringVar(&divider, "d", "", "shows a custom divider between the subtitles")
 	flag.Parse()
 	if len(f1) == 0 {
 		fmt.Println("s1", help)
@@ -70,7 +73,16 @@ func parseArgs() args {
 		os.Exit(1)
 	}
 	tolerance := time.Duration(time.Duration(t) * time.Millisecond)
-	return args{f1: f1, f2: f2, output: fO, tolerance: tolerance, searchOffset: sO, errMsg: errMsg, maxPercentageErrAllowed: mpea}
+	return args{
+		f1:                      f1,
+		f2:                      f2,
+		output:                  fO,
+		tolerance:               tolerance,
+		searchOffset:            sO,
+		errMsg:                  errMsg,
+		maxPercentageErrAllowed: mpea,
+		divider:                 divider,
+	}
 }
 
 func readFromFile(fn string) *astisub.Subtitles {
@@ -88,23 +100,29 @@ func readFromFile(fn string) *astisub.Subtitles {
 // searchOffset the number of subtitles to search for both forward and backward
 // errMsg the error to be displayed if subtitle can't be found
 // output: the number of errors over the total length and the percent that it represents
-func mix(s1 *astisub.Subtitles, s2 *astisub.Subtitles, tolerance time.Duration, searchOffset int, errMsg string) (int, float64) {
+func mix(s1 *astisub.Subtitles, s2 *astisub.Subtitles, tolerance time.Duration, searchOffset int, errMsg string, divider string) (int, float64) {
 	length := Max(len(s1.Items), len(s2.Items))
 	numErr := 0
 	for _, item := range s1.Items {
 		i2Item, err := search(item, s2.Items, searchOffset, tolerance)
 		if err != nil {
 			numErr += 1
-			notFoundItem := astisub.LineItem{Text: errMsg}
-			notFoundItems := []astisub.LineItem{notFoundItem}
-			notFoundLine := astisub.Line{Items: notFoundItems}
-			item.Lines = append(item.Lines, notFoundLine)
+			item.Lines = append(item.Lines, createLine(errMsg))
 		} else {
+			if len(divider) > 0 {
+				item.Lines = append(item.Lines, createLine(divider))
+			}
 			item.Lines = append(item.Lines, i2Item.Lines...)
 		}
 	}
 	percErr := float64(numErr) / float64(length) * 100
 	return numErr, percErr
+}
+
+func createLine(t string) astisub.Line {
+	li := astisub.LineItem{Text: t}
+	s := []astisub.LineItem{li}
+	return astisub.Line{Items: s}
 }
 
 func search(i1 *astisub.Item, i2 []*astisub.Item, searchOffset int, tolerance time.Duration) (*astisub.Item, error) {

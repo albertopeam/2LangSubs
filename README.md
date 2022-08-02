@@ -14,23 +14,21 @@
 
 * help: go run main.go math.go slice.go -h
 * usage: go run main.go -s1 file1 -s2 file2
-  * ie: go run main.go math.go slice.go -s1 testAssets/Thr-Spanish.srt -s2 testAssets/Thr.2011.720p.BrRip.264.English.srt -sO testAssets/output.srt -t 500 -so 10 -em "-not found subtitle-" -mpe 5
+  * ie: go run main.go math.go slice.go -s1 testAssets/Thr-Spanish.srt -s2 testAssets/Thr.2011.720p.BrRip.264.English.srt -sO testAssets/output.srt -t 500 -so 10 -em "-not found subtitle-" -mpe 5 -d "*-*"
 
 ## Tasks
 
 * Read from files and structure data sets. OK
 * Algorythm to join both data sets. OK
+* Investigate subs with diffs in subtitles and find an algorythm capable of handle it. OK
 * Investigate if divider occupies to much space. Implement if not
 * Algorythm to extend subtitles for a ratio or crop til collision
-* Investigate subs with diffs in subtitles and find an algorythm capable of handle it. OK
 
 ## Improvements
 
-* Add divider to distinguish languages quickly
-* Max error % force fail, 5% - 10%
 * Split into diff files
-* Use alias for astisub.Item: `type Item astisub.Item`
 * Test
+* Use alias for astisub.Item: `type Item astisub.Item`
 
 ## Assets
 
