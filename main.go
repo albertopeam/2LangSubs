@@ -105,13 +105,13 @@ func mix(s1 *astisub.Subtitles, s2 *astisub.Subtitles, tolerance time.Duration, 
 	numErr := 0
 	for _, item := range s1.Items {
 		i2Item, err := search(item, s2.Items, searchOffset, tolerance)
+		if len(divider) > 0 {
+			item.Lines = append(item.Lines, createLine(divider))
+		}
 		if err != nil {
 			numErr += 1
 			item.Lines = append(item.Lines, createLine(errMsg))
 		} else {
-			if len(divider) > 0 {
-				item.Lines = append(item.Lines, createLine(divider))
-			}
 			item.Lines = append(item.Lines, i2Item.Lines...)
 		}
 	}

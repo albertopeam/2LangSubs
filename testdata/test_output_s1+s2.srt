@@ -1,4 +1,65 @@
 ﻿1
+00:00:01,200 --> 00:00:02,000
+:)
+***
+%- not found subtitle -%
+
+2
 00:01:24,209 --> 00:01:25,543
 Hola
+***
 Hi
+
+3
+00:01:25,962 --> 00:01:28,463
+¿Puedo encender la radio?
+***
+Can I turn on the radio?
+
+4
+00:01:30,125 --> 00:01:33,600
+Te repito
+***
+%- not found subtitle -%
+
+5
+00:01:36,430 --> 00:01:40,308
+¿Puedo encender esta radio?
+***
+Can I turn this radio?
+
+6
+00:01:41,110 --> 00:01:42,255
+Sí
+***
+Sure
+
+7
+00:01:43,788 --> 00:01:45,974
+Nuevas noticias confirman las sospechas
+***
+New notices confirm suspicions
+
+8
+00:01:48,350 --> 00:01:49,760
+Me lo temía
+***
+I feared it
+
+9
+00:01:50,000 --> 00:01:51,000
+Maldición
+***
+Damm!
+
+10
+00:00:00,000 --> 00:00:00,500
+nombre película
+***
+film name
+
+11
+00:00:00,000 --> 00:00:00,500
+nombre película2
+***
+%- not found subtitle -%

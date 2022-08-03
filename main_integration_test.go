@@ -11,7 +11,7 @@ func TestGivenInputArgsWhenInvokeMainThenProcessSubtitlesAndMatchOutputWithExpec
 	oldArgs := os.Args
 	defer func() { os.Args = oldArgs }()
 
-	os.Args = []string{"cmd", "-s1=testdata/test_input_s1.srt", "-s2=testdata/test_input_s2.srt", "-sO=testdata/test_output.srt"}
+	os.Args = []string{"cmd", "-s1=testdata/test_input_s1.srt", "-s2=testdata/test_input_s2.srt", "-sO=testdata/test_output.srt", "-d=***", "-mpe=28"}
 
 	main()
 

@@ -30,8 +30,7 @@
 
 ## Improvements
 
-* Split into diff files
-* Test
+* Generate artifact and publish in github
 * Use alias for astisub.Item: `type Item astisub.Item`
 
 ## Assets
