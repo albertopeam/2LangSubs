@@ -22,11 +22,15 @@
 
 ## Tasks
 
-* Read from files and structure data sets. OK
-* Algorythm to join both data sets. OK
-* Investigate subs with diffs in subtitles and find an algorythm capable of handle it. OK
-* Investigate if divider occupies to much space. Implement if not
-* Algorythm to extend subtitles for a ratio or crop til collision
+* Read from files and structure data sets. `OK`
+* Algorythm to join both data sets. `OK`
+* Investigate subs with diffs in subtitles and find an algorythm capable of handle it. `OK`
+* Investigate if divider occupies to much space. Implement if not. `OK`
+* Algorythm to extend subtitles for a ratio or crop til collision. `NOK`
+* Create Core package. `NOK`
+* Create REST API using gin. `NOK`
+* Create Frontend using React. `NOK`
+* Deploy to some provider. `NOK`
 
 ## Improvements
 
